@@ -1,0 +1,31 @@
+{
+  "name": "flow-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "snapshot": "node scripts/build-snapshot.mjs",
+    "predev": "npm run snapshot",
+    "dev": "vite --host 127.0.0.1 --port 4317 --strictPort",
+    "prebuild": "npm run snapshot",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4317 --strictPort",
+    "test": "node --test",
+    "check": "npm test && npm run build"
+  },
+  "dependencies": {
+    "elkjs": "0.11.0",
+    "lucide-react": "0.453.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "reactflow": "11.11.4"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2",
+    "vite": "8.3.4"
+  },
+  "description": "Source-backed workflow explorer for programs, models, and agent harnesses.",
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "instanceId": "example:instance:store-discovery",
+  "flowId": "store-discovery",
+  "evidenceKind": "synthetic",
+  "definitionSha256": "1800cc31956a4976d667dbfddf24ad2190b86bb6558f23c4976925434fb54e65",
+  "state": "failed",
+  "sourceRunIds": [
+    "example:run:main"
+  ],
+  "completionEvidenceRef": null,
+  "executions": [
+    {
+      "executionId": "example:execution:store.scope",
+      "nodeId": "store.scope",
+      "itemKey": "example:store:scope-1",
+      "runId": "example:run:main",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [],
+      "outputRefs": [
+        "example:artifact:store.scope"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.scope"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:store.read",
+      "nodeId": "store.read",
+      "itemKey": "example:store:scope-1",
+      "runId": "example:run:main",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:store.scope"
+      ],
+      "outputRefs": [
+        "example:artifact:store.read"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.read"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:store.known",
+      "nodeId": "store.known",
+      "itemKey": "example:store:scope-1",
+      "runId": "example:run:main",
+      "taskId": null,
+      "attempt": null,
+      "state": "reused",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:store.read",
+        "example:artifact:store.scope"
+      ],
+      "outputRefs": [
+        "example:artifact:store.known"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.known"
+      ],
+      "reason": "演示 item-a 复用已保存的 Product 归属与来源；无需比较模型"
+    },
+    {
+      "executionId": "example:execution:store.triage",
+      "nodeId": "store.triage",
+      "itemKey": "example:item:b",
+      "runId": "example:run:main",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:store.known"
+      ],
+      "outputRefs": [
+        "example:artifact:store.triage"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.triage"
+      ],
+      "reason": "演示逐条初判：item-a 由既有归属复用；item-b 为目标商品；item-c 明确 exclude"
+    },
+    {
+      "executionId": "example:execution:store.enrich",
+      "nodeId": "store.enrich",
+      "itemKey": "example:item:b",
+      "runId": "example:run:main",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:store.triage",
+        "example:artifact:store.known"
+      ],
+      "outputRefs": [
+        "example:artifact:store.enrich"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.enrich"
+      ],
+      "reason": "演示 item-b 普通详情后仍缺 SKU 名称，再补 Pro；item-c 不调用详情"
+    },
+    {
+      "executionId": "example:execution:store.interpret",
+      "nodeId": "store.interpret",
+      "itemKey": "example:item:b",
+      "runId": "example:run:main",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:store.enrich",
+        "example:artifact:store.triage"
+      ],
+      "outputRefs": [
+        "example:artifact:store.interpret"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.interpret"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:store.select",
+      "nodeId": "store.select",
+      "itemKey": "example:item:b",
+      "runId": "example:run:main",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:store.interpret"
+      ],
+      "outputRefs": [
+        "example:artifact:store.select"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.select"
+      ],
+      "reason": "演示 item-b 有两个可靠候选，进入比较；item-a 复用已有 Product"
+    },
+    {
+      "executionId": "example:execution:store.compare",
+      "nodeId": "store.compare",
+      "itemKey": "example:item:b",
+      "runId": "example:run:main",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:store.select"
+      ],
+      "outputRefs": [
+        "example:artifact:store.compare"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.compare"
+      ],
+      "reason": "演示模型成功返回 needs_evidence；调用成功不代表身份已解决",
+      "inputValue": {
+        "itemId": "example:item:b",
+        "candidateProductIds": [
+          "example:product:b1",
+          "example:product:b2"
+        ]
+      },
+      "outputValue": {
+        "action": "needs_evidence",
+        "reason": "演示：当前详情无法区分两个商品身份。"
+      }
+    },
+    {
+      "executionId": "example:execution:store.apply",
+      "nodeId": "store.apply",
+      "itemKey": "example:store:scope-1",
+      "runId": "example:run:main",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:store.known",
+        "example:artifact:store.enrich",
+        "example:artifact:store.triage-item-c",
+        "example:artifact:store.interpret",
+        "example:artifact:store.select",
+        "example:artifact:store.compare"
+      ],
+      "outputRefs": [
+        "example:artifact:store.apply"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.apply"
+      ],
+      "reason": "演示 apply=true，确定项已发布并取得版本回执；item-b 仍待证",
+      "inputValue": {
+        "apply": true,
+        "expected_scope_version": "example:version:1"
+      },
+      "outputValue": {
+        "complete": false,
+        "unresolved_count": 1,
+        "apply_result": {
+          "receiptId": "example:artifact:store.apply",
+          "scopeVersion": "example:version:2"
+        }
+      }
+    },
+    {
+      "executionId": "example:execution:store.finish",
+      "nodeId": "store.finish",
+      "itemKey": "example:store:scope-1",
+      "runId": "example:run:main",
+      "taskId": "example:task:store-1",
+      "attempt": 1,
+      "state": "failed",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:store.apply"
+      ],
+      "outputRefs": [],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.finish"
+      ],
+      "reason": "演示存在 unresolved：已记录 completed 结果事件，但 task=dead、run=failed；确定项写入仍然存在"
+    },
+    {
+      "executionId": "example:execution:store.triage-item-c",
+      "nodeId": "store.triage",
+      "itemKey": "example:item:c",
+      "runId": "example:run:main",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:store.known"
+      ],
+      "outputRefs": [
+        "example:artifact:store.triage-item-c"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:store.triage-item-c"
+      ],
+      "reason": "exclude：此 item 不进入详情路径"
+    }
+  ],
+  "sideEffects": {
+    "state": "confirmed-in-example",
+    "receiptRef": "example:artifact:store.apply",
+    "unresolvedItemKeys": [
+      "example:item:b"
+    ]
+  }
+}

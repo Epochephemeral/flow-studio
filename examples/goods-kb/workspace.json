@@ -1,0 +1,1099 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "title": "复杂流程实例",
+    "date": "2026-10-20",
+    "baseCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+    "scope": "从 goods-kb 工作区整理的两条复杂职责流；来源是带原文件哈希和行号的摘录。运行示例均为 synthetic，不代表生产部署或实际执行。",
+    "promptScope": "Prompt 为源码常量或迁移种子的静态样例；Claim 组合种子沿用 v6 替换加 v7 追加规则。实际 active policy、response schema、运行输入与模型参数需按 run 采集，未读取的正文保持未知。"
+  },
+  "nodes": [
+    {
+      "id": "search.sweep",
+      "name": "发现范围扫描",
+      "type": "program",
+      "purpose": "按 registry 策略有界选择待刷新的 Bilibili 品类与搜索配置。",
+      "implementation": "src/goods_kb/discovery/automatic_search_service.py",
+      "sources": [
+        {
+          "path": "evidence/01-automatic_search_service.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "profiles",
+          "schema": "SearchProfile[]"
+        }
+      ],
+      "prompts": [],
+      "trigger": "周期扫描；是否启用由 policy 决定",
+      "note": null
+    },
+    {
+      "id": "search.fire",
+      "name": "平台内容搜索",
+      "type": "program",
+      "purpose": "执行搜索词与平台请求，保留候选与原始响应。",
+      "implementation": "src/goods_kb/search/fire.py",
+      "sources": [
+        {
+          "path": "evidence/02-fire.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "profiles",
+          "schema": "SearchProfile[]",
+          "required": true,
+          "from": {
+            "node": "search.sweep",
+            "output": "profiles"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "candidates",
+          "schema": "Candidate[]"
+        }
+      ],
+      "prompts": [],
+      "trigger": "外部或领域调度器启动",
+      "note": null
+    },
+    {
+      "id": "admission.semantic",
+      "name": "内容准入判断",
+      "type": "model",
+      "purpose": "根据候选标题和摘要判断是否值得继续抓取。",
+      "implementation": "src/goods_kb/l2_selection/admission_service.py",
+      "sources": [
+        {
+          "path": "evidence/03-admission_service.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "candidates",
+          "schema": "Candidate[]",
+          "required": true,
+          "from": {
+            "node": "search.fire",
+            "output": "candidates"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "admitted",
+          "schema": "AdmittedCandidate[]"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "System prompt",
+          "text": "你是 fetch 准入的语义排除器。你的核心原则是默认决策为 admit_fetch，职责在于排除而非筛选价值。只有当你能确信内容不可能服务于任何真实消费决策时，才执行 reject。\n\nreject 仅有两个必须证据明确的适用条件。第一个是 clearly_unrelated，即内容主体与任何消费决策之间不存在合理关联。判断标准是：即使在最宽泛的理解下，也无法构建出一个消费者、购买者或使用者会关心此内容的合理场景。\n\n第二个是 obvious_pollution，即内容是伪装成信息的非信息。其判断标准为内容的真实目的并非传递关于某个事物的判断、经验或事实，而是充当流量入口、充当关键词容器，或缺乏单一可识别主体。其本质特征在于剥离形式后，不存在一个人类作者试图向另一个人类传达某件具体事情。\n\nreject 要求的是排除性确信，你必须能明确陈述“这不可能服务于任何消费决策”或“这不是真实内容”的理由。任何需要 fetch 后才能判断的不确定性，都属于 admit_fetch 的管辖范围，即不确定就等于 admit。\n\n信息量、质量、深度、互动表现、内容形式以及需求常见度，都不是准入维度的判断依据。准入只回答一个问题：有没有充分理由在 fetch 之前就将其排除？",
+          "origin": "Registry 迁移种子",
+          "source": {
+            "path": "evidence/04-0083_automatic_author_discovery_recovery.sql.md",
+            "line": 9
+          },
+          "additionalSources": []
+        }
+      ],
+      "trigger": "外部或领域调度器启动",
+      "note": "展示 semantic_rejector:2 仓库种子；实际 prompt_ref 由发现策略选择。"
+    },
+    {
+      "id": "cacp.dispatch",
+      "name": "准入任务派发",
+      "type": "program",
+      "purpose": "对已准入内容进行 durable dispatch、retry 与 reclaim。",
+      "implementation": "src/goods_kb/ops/reconciler.py",
+      "sources": [
+        {
+          "path": "evidence/05-reconciler.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "admitted",
+          "schema": "AdmittedCandidate[]",
+          "required": true,
+          "from": {
+            "node": "admission.semantic",
+            "output": "admitted"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tasks",
+          "schema": "FetchTask[]"
+        }
+      ],
+      "prompts": [],
+      "trigger": "外部或领域调度器启动",
+      "note": null
+    },
+    {
+      "id": "content.fetch",
+      "name": "正文与媒体抓取",
+      "type": "program",
+      "purpose": "获取内容详情，保存正文、媒体来源及文本需求。",
+      "implementation": "src/goods_kb/l2_selection/fetch_service.py",
+      "sources": [
+        {
+          "path": "evidence/06-fetch_service.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "tasks",
+          "schema": "FetchTask[]",
+          "required": true,
+          "from": {
+            "node": "cacp.dispatch",
+            "output": "tasks"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "detail",
+          "schema": "DetailObservation"
+        }
+      ],
+      "prompts": [],
+      "trigger": "外部或领域调度器启动",
+      "note": null
+    },
+    {
+      "id": "content.asr",
+      "name": "视频转写",
+      "type": "program",
+      "purpose": "调用媒体 ASR 服务，持久化 transcript 与处理耗时。",
+      "implementation": "src/goods_kb/media/video_asr.py",
+      "sources": [
+        {
+          "path": "evidence/07-video_asr.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "detail",
+          "schema": "DetailObservation",
+          "required": true,
+          "from": {
+            "node": "content.fetch",
+            "output": "detail"
+          },
+          "condition": "媒体要求 transcript 时"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "transcript",
+          "schema": "Transcript"
+        }
+      ],
+      "prompts": [],
+      "trigger": "外部或领域调度器启动",
+      "note": "这是外部媒体服务调用；仓库未暴露上游 ASR 的内部 prompt。"
+    },
+    {
+      "id": "content.resolve",
+      "name": "权威全文解析",
+      "type": "program",
+      "purpose": "依据文本需求和来源事实选择 native body 或完整 transcript。",
+      "implementation": "src/goods_kb/content/text_resolution.py",
+      "sources": [
+        {
+          "path": "evidence/08-text_resolution.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "detail",
+          "schema": "DetailObservation",
+          "required": true,
+          "from": {
+            "node": "content.fetch",
+            "output": "detail"
+          }
+        },
+        {
+          "name": "transcript",
+          "schema": "Transcript",
+          "required": true,
+          "from": {
+            "node": "content.asr",
+            "output": "transcript"
+          },
+          "condition": "仅视频路径需要"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "schema": "ResolvedText"
+        }
+      ],
+      "prompts": [],
+      "trigger": "所需的正文或 transcript 就绪",
+      "note": "两条输入是条件路径，图上的连线不表示图文内容也必须等待 ASR。"
+    },
+    {
+      "id": "content.quality",
+      "name": "内容质量评估",
+      "type": "model",
+      "purpose": "对权威全文进行 V3 数值维度质量评价。",
+      "implementation": "src/goods_kb/content/quality_client.py",
+      "sources": [
+        {
+          "path": "evidence/09-quality_client.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "text",
+          "schema": "ResolvedText",
+          "required": true,
+          "from": {
+            "node": "content.resolve",
+            "output": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "quality",
+          "schema": "QualityDimensionsV3"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "System prompt",
+          "text": "你是内容质量标注顶级专家\n\n判断目标：\n1. 认知操作层级\n2. 信息稀缺度\n3. 内容是否具有强烈个人风格\n4. 是否商单, 广告\n\n注意：每个梯度的标准，内容中只要有局部达到更高的标准，就可以给到更高的梯度！\n\nthinking（认知操作层级，只判断作者对素材做了什么，不管素材本身是否稀缺）:\n    0：信息的搬运或排列组合，未见筛选、判断或重组\n    1：对信息做了个人化的筛选或编排，但筛选标准是朴素的。\n    2：使用了现成的判断框架（行业通用的、教科书里的、平台常见的分析套路），作者的贡献是\"选对了框架并正确执行\"。\n    3：自行搭建了判断路径——自己定义了变量、关系或因果链，而非套用现成框架。路径只服务于当前问题。\n    4：判断路径本身被显式抽象为可迁移的工具——作者意识到自己在建模，并将其表达为读者可独立复用的结构。\n\nsource（信息稀缺度，只判断信息本身的可获取性，不管作者对它做了多深的加工）:\n    0：所有信息均可从公开资料、常识或通用模板中获得，不需要任何亲身经历即可写出。\n    1：提及了亲身经历，但无具体细节描述。\n    2：有来自亲身体验的具体细节，但该经历本身容易获得（多数人稍加行动即可经历）。\n    3：细节的获取需要一定的实践成本、专业门槛或局部私域权限，但属于该领域有经验者可稳定复现或获取的信息。\n    4：细节来自罕见场景、极端条件、长期跟踪、大样本私人数据或低概率事件；即使同行亲历者也未必碰到。\n\nstyle（检查文本中是否存在\"非必要的表达选择\"——即不是品类惯例、平台规范或功能需求所要求的，而是作者主动做出的、可以不这样写但偏要这样写的表达）:\n    0：几乎没有非必要选择，文本完全由功能或模板驱动。\n    1：存在非必要选择（口语化、情绪、梗、主观态度），但这些选择属于该品类/平台创作者的公共repertoire，是\"这类人都会这么写\"的东西。\n    2：存在该品类公共repertoire无法解释的非必要选择——独特的联想、反常规的结构、专属的语言习惯、或不符合该品类\"应该怎么写\"的审美决策。\n\nad（注意：此字段分数越高=广告痕迹越少=越好）:\n    0：明确声明商业合作。\n    1：未声明合作，但推广意图明显——品牌名高频出现、话术过度正面无缺点、产品信息异常完整（像品牌方brief）、带购买暗号/优惠码、内容结构明显服务于转化。\n    2：未声明合作，有轻微可疑信号——如偶尔提及品牌名、顺带放了链接、对某产品评价偏正面但尚在合理范围，无法排除是真实自发推荐。\n    3：无任何商业推广痕迹，或本人明确声明非广告。\n\n输出格式（合法 JSON，不要包含 Markdown 代码块、注释或多余文本）：\n{\n  \"thinking\": {\n    \"reason\": \"一句话解释选择该分数的原因\",\n    \"value\": 0-4\n  },\n  \"source\": {\n    \"reason\": \"一句话解释选择该分数的原因\",\n    \"value\": 0-4\n  },\n  \"style\": {\n    \"reason\": \"一句话解释选择该分数的原因\",\n    \"value\": 0-2\n  },\n  \"ad\": {\n    \"reason\": \"一句话解释选择该分数的原因\",\n    \"value\": 0-3\n  }\n}",
+          "origin": "Registry 迁移种子",
+          "source": {
+            "path": "evidence/10-0042_content_quality_dimension_v3_registry.sql.md",
+            "line": 9
+          },
+          "additionalSources": []
+        }
+      ],
+      "trigger": "外部或领域调度器启动",
+      "note": "全文被分块时按质量客户端契约逐块评价；展示 numeric_dimensions_v3:1 种子。"
+    },
+    {
+      "id": "claim.qualify",
+      "name": "Claim 资格筛选",
+      "type": "program",
+      "purpose": "按自动策略选择可抽取、需补路由或需更新的内容。",
+      "implementation": "src/goods_kb/dimension/automatic_claim_service.py",
+      "sources": [
+        {
+          "path": "evidence/11-automatic_claim_service.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "quality",
+          "schema": "QualityDimensionsV3",
+          "required": true,
+          "from": {
+            "node": "content.quality",
+            "output": "quality"
+          }
+        },
+        {
+          "name": "text",
+          "schema": "ResolvedText",
+          "required": true,
+          "from": {
+            "node": "content.resolve",
+            "output": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sources",
+          "schema": "QualifiedSource[]"
+        }
+      ],
+      "prompts": [],
+      "trigger": "周期性有界扫描",
+      "note": null
+    },
+    {
+      "id": "claim.extract",
+      "name": "Claim 与维度抽取",
+      "type": "model",
+      "purpose": "抽取原文明示陈述及 model_dim，宿主定位原文引用并校验。",
+      "implementation": "src/goods_kb/dimension/claim_client.py",
+      "sources": [
+        {
+          "path": "evidence/12-claim_client.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "sources",
+          "schema": "QualifiedSource[]",
+          "required": true,
+          "from": {
+            "node": "claim.qualify",
+            "output": "sources"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "claims",
+          "schema": "Claim[]"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "Claim 抽取 · v7 种子",
+          "text": "你是一个正在认真考虑是否购买的消费者。你面前是一篇关于某个产品的内容。\n你的任务：从这篇内容里找出真正会影响你最终买或不买的 Claim。\n\n## Claim 想解决什么问题？\n\n消费者在做购买决策时，面对的信息环境是：\n- 信息分散：关于一个产品的有用信息散落在几十篇评测、几百条评论、官方页面、社交帖子里\n- 信息密度低：一篇 3000 字评测里，可能只有 3 句话真正影响你买不买\n- 信息不可比：不同来源用不同方式描述同一个维度，消费者无法快速对齐\n\n所以 claim 的本质目的是：把散落在海量内容中的、真正影响决策的信息，提取、标准化、聚合，让消费者能快速看到“关于这个产品，所有来源里最关键的几件事”。\n\n## claim_text 怎么写\n\n你在写给另一个同样在犹豫的消费者看，他没读过原文，你要让他看完你写的这段话之后，能直接用这个信息来做判断。这意味着你的 claim 要包含完整上下文，禁止对产品等核心实体使用代词。\n\n- `claim_text` 必须明确写出被描述主体的名称。主体不只是产品名，包括任何被评价对象。\n- 如果原文当前句群里没有把主体写全，但结合全文可以判断主体是谁，你要主动把主体补全到 `claim_text` 里。\n- 不要把 claim_text 写成标签、短句、slogan。claim_text 应该是可以直接帮助消费者判断买不买的完整信息。\n\n## subject_hint\n\n每条 claim 必须附带 `subject_hint`，用于说明这条 claim 实际在评价哪个购买对象。这个字段是给后续品类、品牌、商品路由用的，不是给消费者看的文案。\n\n`subject_hint` 包含：\n\n- `subject_text`：这条 claim 的主要被评价对象，用自然语言写完整，例如“飞利浦制氧机”“Hibreak 高配墨水屏手机”“Redmi G27Q 240Hz 显示器”。\n- `category_text`：这个对象实际所属的商品品类，用消费者能理解的公域名称，例如“制氧机”“手机”“显示器”。不要输出内部 ID。无法判断时填 null。\n- `brand_text`：品牌名。无法判断时填 null。\n- `product_text`：具体商品名、型号、系列或 SKU。无法判断时填 null。\n- `hint_evidence`：你为什么这样判断，用一句话说明，必须基于原文。\n\n判断 `subject_hint` 时要看整篇内容的主体，不要只看 claim 里的功能词。比如一篇手机评测里提到语音录入功能，品类仍然是手机；一篇制氧机内容里提到压缩机、噪音、连续运行，品类仍然是制氧机。\n\n如果一条 claim 明确对比多个对象，`subject_hint` 填这条 claim 的主要评价对象；被比较对象放到 `comparison_subject_hints` 数组中，字段同 `subject_hint`。没有明确比较对象时输出空数组。\n\n## claim_meta\n\n每条 claim 附带一个 `claim_meta` 对象，包含你对这条信息的判断：\n\n- `temporality`：这条信息的时效性等级。选一个：\n  - `permanent`：物理属性、硬件规格，不会随更新改变\n  - `semi_stable`：软件功能、算法表现，可能随固件/版本迭代变化\n  - `volatile`：价格、促销、库存、客服体验等短期状态\n\n- `verifiability`：这条信息的可验证程度。选一个：\n  - `objective`：有明确数据/实测/第三方认证\n  - `subjective`：主观体验但有具体场景和细节支撑\n\n- `evidence_type`：信息的证据来源，凭你自己的理解写\n\n- `decision_direction`：这条信息对决策的作用方向。选一个：\n  - `pro`：支持购买\n  - `con`：不利于购买/指出问题\n  - `conditional`：限定适用条件（对某类人好/对另一类人不合适）\n\n## quote 要求\n\nquote 是输入原文的连续片段，选能覆盖完整语境的句群。引用的精确字符位置由系统在原文中定位，你不需要也不应该给出字符坐标。\n\n## 输出\n\n每条 claim 输出：claim_text、quote、confidence、model_dim（含 perspective、dimension_name、dimension_definition、aliases、rich_context）、claim_meta、subject_hint、comparison_subject_hints。\n\n只输出 JSON：{\"claims\":[...]}。\n\nmodel_dim 语义硬约束：\n- aliases 只能是与 dimension_name 相同指代、可替换规范名的名称字符串。\n- rich_context 只能是不能替换规范名、但有助于理解或消歧的上下文字符串。\n- 型号、规格、数值、场景、结论、解释、例子和 query 禁止进入 aliases。\n- 两个字段都必须输出数组；同一个值不得同时出现。",
+          "origin": "Registry 迁移种子",
+          "source": {
+            "path": "evidence/13-0084_claim_extraction_alias_span_contract.sql.md",
+            "line": 9
+          },
+          "additionalSources": [
+            {
+              "path": "evidence/14-0161_dimension_claim_semantic_field_separation.sql.md",
+              "line": 9
+            }
+          ]
+        },
+        {
+          "title": "维度表达补充约束",
+          "text": "把每条 claim 归入一个购买决策维度，输出维度表达 model_dim。\n\nmodel_dim 必须包含：\n- perspective：consumer_side 或 production_side，与 claim 顶层一致。\n- dimension_name：维度规范名，贴近消费者决策语言。\n- dimension_definition：一句话说明该维度调查什么购买问题。\n- aliases：仅限与 dimension_name 指代同一问题、在相同语境中可替换规范名的产品无关名称。型号、规格、数值、场景、结论、解释、例子、query 和消歧说明都不是 alias。无则 []。\n- rich_context：不能替换 dimension_name、但有助于理解边界或消歧的上下文短语。它与 aliases 语义互斥，无则 []。\n\nclaim 的产品事实、型号、数值、比较结果和使用场景不得进入 aliases。若无法确定一个值是否可替换规范名，放 rich_context，不要猜成 alias。",
+          "origin": "Registry 迁移种子",
+          "source": {
+            "path": "evidence/15-0161_dimension_claim_semantic_field_separation.sql.md",
+            "line": 9
+          },
+          "additionalSources": []
+        }
+      ],
+      "trigger": "外部或领域调度器启动",
+      "note": "System = Claim prompt + 维度补充约束 + exact response JSON Schema。前两部分展示仓库种子全文；schema 从运行策略读取，未在静态 demo 中伪造。 逐源、逐块调用及 quote 校验属于该职责内部；图不代表一次大请求。"
+    },
+    {
+      "id": "claim.route",
+      "name": "Claim 路由与补齐",
+      "type": "program",
+      "purpose": "按向量候选、阈值和策略安排品类/商品/维度路由，必要时调用品类判断与维度生成模型。",
+      "implementation": "src/goods_kb/dimension/claim_metadata_service.py",
+      "sources": [
+        {
+          "path": "evidence/16-claim_metadata_service.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "claims",
+          "schema": "Claim[]",
+          "required": true,
+          "from": {
+            "node": "claim.extract",
+            "output": "claims"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "routes",
+          "schema": "ClaimRoute[]"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "System prompt",
+          "text": "你负责判断内容抽取模型给出的一个品类说法，能否归入一个现有的商品推荐\nCategory。observed_category_text 是权威输入；不得从标题、正文、使用场景、\n功能词或比较对象改写它。\n\n这是推荐服务归属，不是严格的生物分类。原则是宽进：误入一个合理的现有\n商品推荐品类，代价低于漏掉可服务的商品证据。语义检索、名称包含和名称\n近似只负责提供候选，不证明候选正确。\n\n必须逐个判断 candidate_categories，而不是判断整组候选是否彼此一致：\n- 只要至少一个候选与输入构成可接受关系，就选择其中最合适的一个；\n- 其他候选仅相关、类型不同或不合适，不能否决已经存在的合理候选；\n- 只有所有候选都不构成可接受关系时，才返回拒绝关系；\n- relation 描述 observed_category_text 与 selected_category_entity_id 之间\n  的关系，不描述 observed_category_text 与整个候选集合之间的关系。\n\n只能选择一种 relation：\n- equivalent：同义词、别称或消费者通常视为同一种商品类型；\n- observed_is_subtype：输入是候选的更具体商品子类型；\n- candidate_is_representative_subtype：输入是较宽的商品类型，候选是其中\n  一个常见、主要且适合承接推荐证据的商品子类型；归入后没有改变商品种类；\n- host_related_product：输入是候选主商品的配件、零部件或耗材，或者反之；\n- related_only：只是功能、技术、用户群、兼容关系或使用场景相关；\n- different_product_type：都是商品，但不是同一种或可承接的商品类型；\n- non_product_subject：输入是服务、地点、路线、内容主题、使用场景或解决\n  方案，候选是与其相关的商品；\n- insufficient：现有信息不足以选择。\n\nequivalent、observed_is_subtype、candidate_is_representative_subtype 必须从\n候选中选择一个 selected_category_entity_id。其余 relation 不得选择候选。\n候选比输入更窄并不自动拒绝；如果它是输入品类中常见且主要的推荐承接品类，\n应使用 candidate_is_representative_subtype。仅仅相关则必须拒绝。不得发明\n输入之外的 Category ID。\n\n只输出以下 JSON object：\n{\n  \"relation\": \"equivalent|observed_is_subtype|candidate_is_representative_subtype|host_related_product|related_only|different_product_type|non_product_subject|insufficient\",\n  \"observed_category_text\": \"逐字复制输入\",\n  \"selected_category_entity_id\": \"前三种 relation 时从输入候选原样复制；否则不输出\",\n  \"reason\": \"一句话说明输入与所选候选的商品推荐归属关系，或说明所有候选都不合适\"\n}",
+          "origin": "Registry 迁移种子",
+          "source": {
+            "path": "evidence/17-0223_claim_category_candidate_choice_v3.sql.md",
+            "line": 9
+          },
+          "additionalSources": []
+        }
+      ],
+      "trigger": "外部或领域调度器启动",
+      "note": "这是固定程序编排，内部包含条件 LLM 调用。这里展示品类候选选择 v3 种子；动态维度生成 prompt 由 catalog_dimension_generate policy 的 prompt_ref 指定，静态快照未读取该 registry 正文。 包含条件模型调用的固定程序编排，因此类型为 program。",
+      "missingPrompts": [
+        {
+          "title": "条件维度生成 Prompt",
+          "ref": "task_policy:catalog_dimension_generate:1 → body.prompt_ref",
+          "source": {
+            "path": "evidence/18-dimension_service.py.md",
+            "line": 9
+          }
+        }
+      ]
+    },
+    {
+      "id": "insight.qualify",
+      "name": "Insight 资格筛选",
+      "type": "program",
+      "purpose": "选择 exact V3 thinking.avg ≥ 3 且全文 ready 的内容。",
+      "implementation": "src/goods_kb/insight/automatic_service.py",
+      "sources": [
+        {
+          "path": "evidence/19-automatic_service.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "quality",
+          "schema": "QualityDimensionsV3",
+          "required": true,
+          "from": {
+            "node": "content.quality",
+            "output": "quality"
+          }
+        },
+        {
+          "name": "text",
+          "schema": "ResolvedText",
+          "required": true,
+          "from": {
+            "node": "content.resolve",
+            "output": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sources",
+          "schema": "QualifiedSource[]"
+        }
+      ],
+      "prompts": [],
+      "trigger": "周期性有界扫描",
+      "note": null
+    },
+    {
+      "id": "insight.extract",
+      "name": "购买决策 Insight",
+      "type": "model",
+      "purpose": "逐篇提炼对消费者选择、比较与避坑有帮助的洞察。",
+      "implementation": "src/goods_kb/insight/client.py",
+      "sources": [
+        {
+          "path": "evidence/20-client.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "sources",
+          "schema": "QualifiedSource[]",
+          "required": true,
+          "from": {
+            "node": "insight.qualify",
+            "output": "sources"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "insights",
+          "schema": "ContentInsightSet"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "System prompt",
+          "text": "你是一名消费决策分析师。\n\n请用第一性原理思考：这篇文章提供了哪些对该品类消费决策真正有帮助的 Insight？\n\n要求：\n1. Insight 应帮助消费者选择、比较、判断或避坑，不要只做文章摘要或事实罗列。\n2. 只依据这篇文章，不引入外部信息。\n3. 每个 Insight 用一到两句话表达，直接、清晰、完整。\n4. 合并重复内容，不强求数量。\n5. 没有有用的 Insight 时，返回空 insights 数组。\n6. category_name 输出文章所讨论的通用品类名称，不要输出内部 ID；无法判断时输出 null。\n7. 不要输出 quote、原文摘录、证据位置或推理过程。\n8. 只输出 JSON，不要输出任何额外文字。\n\n输出格式：\n{\"category_name\":\"品类名称或 null\",\"insights\":[{\"insight\":\"一到两句话的 Insight\"}]}",
+          "origin": "Registry 迁移种子",
+          "source": {
+            "path": "evidence/21-0110_content_insight_extraction.sql.md",
+            "line": 9
+          },
+          "additionalSources": []
+        }
+      ],
+      "trigger": "外部或领域调度器启动",
+      "note": "System = prompt 全文 + exact response JSON Schema。没有有用洞察时返回空数组；示例不展示虚构模型输出。"
+    },
+    {
+      "id": "insight.route",
+      "name": "Insight 品类路由",
+      "type": "program",
+      "purpose": "用 category_name 和洞察全文构造 route text，向量匹配 active 品类。",
+      "implementation": "src/goods_kb/insight/category_route_service.py",
+      "sources": [
+        {
+          "path": "evidence/22-category_route_service.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "insights",
+          "schema": "ContentInsightSet",
+          "required": true,
+          "from": {
+            "node": "insight.extract",
+            "output": "insights"
+          },
+          "condition": "insights 非空"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "route",
+          "schema": "InsightCategoryRoute"
+        }
+      ],
+      "prompts": [],
+      "trigger": "外部或领域调度器启动",
+      "note": "内部使用 embedding 模型；输入是 route text，不是聊天 prompt。阈值与歧义规则由程序消费。"
+    },
+    {
+      "id": "store.scope",
+      "name": "品牌与店铺范围",
+      "type": "program",
+      "purpose": "读取品牌×品类范围、权威店铺与既有 Product 快照。",
+      "implementation": "src/goods_kb/store_product_discovery/controller.py",
+      "sources": [
+        {
+          "path": "evidence/23-controller.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "scope",
+          "schema": "AuthorityStoreScope"
+        }
+      ],
+      "prompts": [],
+      "trigger": "控制器成功 claim 店铺×品类任务后",
+      "note": null
+    },
+    {
+      "id": "store.read",
+      "name": "权威店铺商品读取",
+      "type": "program",
+      "purpose": "完整分页读取店铺商品行，保留平台身份与列表结束证据。",
+      "implementation": "src/goods_kb/store_product_discovery/store_reader.py",
+      "sources": [
+        {
+          "path": "evidence/24-store_reader.py.md",
+          "line": 9
+        },
+        {
+          "path": "evidence/32-store_reader.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "scope",
+          "schema": "AuthorityStoreScope",
+          "required": true,
+          "from": {
+            "node": "store.scope",
+            "output": "scope"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "items",
+          "schema": "StoreItem[]"
+        }
+      ],
+      "prompts": [],
+      "trigger": "范围与店铺身份已取得",
+      "note": null
+    },
+    {
+      "id": "store.known",
+      "name": "既有归属复用",
+      "type": "program",
+      "purpose": "按平台与 item_id 分离已知归属和待判断行。",
+      "implementation": "src/goods_kb/store_product_discovery/classification.py",
+      "sources": [
+        {
+          "path": "evidence/25-classification.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "items",
+          "schema": "StoreItem[]",
+          "required": true,
+          "from": {
+            "node": "store.read",
+            "output": "items"
+          }
+        },
+        {
+          "name": "scope",
+          "schema": "AuthorityStoreScope",
+          "required": true,
+          "from": {
+            "node": "store.scope",
+            "output": "scope"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "unresolved",
+          "schema": "StoreItem[]"
+        },
+        {
+          "name": "known",
+          "schema": "KnownItem[]"
+        }
+      ],
+      "prompts": [],
+      "trigger": "店铺完整分页读取成功后",
+      "note": null
+    },
+    {
+      "id": "store.triage",
+      "name": "店铺行初判",
+      "type": "model",
+      "purpose": "先排除明显非目标项，其余项进入详情补证。",
+      "implementation": "src/goods_kb/store_product_discovery/service.py",
+      "sources": [
+        {
+          "path": "evidence/29-service.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "unresolved",
+          "schema": "StoreItem[]",
+          "required": true,
+          "from": {
+            "node": "store.known",
+            "output": "unresolved"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "initial",
+          "schema": "ItemInterpretation[]"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "INTERPRET_SYSTEM",
+          "text": "你判断一个权威店铺商品行表达的消费者比较对象。\n只使用输入事实。输出 JSON，不补查、不猜证据。\nProduct 是消费者会独立比较的商品身份：明显不同的型号、机身、形态、容量或核心能力应分开；颜色、赠品、存储卡、安装包和纯套餐通常只是购买配置。\n名称直观表明独立商品时直接判断，不要仅因缺少逐项参数对比而标记待证。只有输入同时指向多个身份且确实无法决定时才 needs_evidence。\n非目标品类整机、配件、二手、官翻或服务项为 exclude。\n返回 disposition、product_name、model、consumer_differences、purchase_configuration、reason。",
+          "origin": "代码常量",
+          "source": {
+            "path": "evidence/27-identity.py.md",
+            "line": 9
+          },
+          "additionalSources": []
+        }
+      ],
+      "trigger": "仅对未复用归属的 item 逐条调用",
+      "note": "按 item 调用；这不是一次把全部 item 送给模型。exclude 直接进入结果汇总。"
+    },
+    {
+      "id": "store.enrich",
+      "name": "按需详情补证",
+      "type": "program",
+      "purpose": "其余 item 获取普通详情，必要时补 Pro；已知归属缺详情时也补充。",
+      "implementation": "src/goods_kb/store_product_discovery/store_reader.py",
+      "sources": [
+        {
+          "path": "evidence/24-store_reader.py.md",
+          "line": 9
+        },
+        {
+          "path": "evidence/33-store_reader.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "initial",
+          "schema": "ItemInterpretation[]",
+          "required": true,
+          "from": {
+            "node": "store.triage",
+            "output": "initial"
+          },
+          "condition": "disposition != exclude"
+        },
+        {
+          "name": "known",
+          "schema": "KnownItem[]",
+          "required": true,
+          "from": {
+            "node": "store.known",
+            "output": "known"
+          },
+          "condition": "已有购买入口缺详情"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "details",
+          "schema": "EnrichedItem[]"
+        }
+      ],
+      "prompts": [],
+      "trigger": "初判未排除，或已知归属的购买详情缺失时",
+      "note": "详情改变时重做身份判断；未改变时复用初判。正常详情缺关键规格或 SKU 名称时补 Pro，不把两者画成互斥路线。"
+    },
+    {
+      "id": "store.interpret",
+      "name": "消费者商品身份判断",
+      "type": "model",
+      "purpose": "判断商品行表达的消费者比较对象与购买配置。",
+      "implementation": "src/goods_kb/store_product_discovery/identity.py",
+      "sources": [
+        {
+          "path": "evidence/26-identity.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "details",
+          "schema": "EnrichedItem[]",
+          "required": true,
+          "from": {
+            "node": "store.enrich",
+            "output": "details"
+          },
+          "condition": "待判断项且详情改变；否则复用初判"
+        },
+        {
+          "name": "initial",
+          "schema": "ItemInterpretation[]",
+          "required": true,
+          "from": {
+            "node": "store.triage",
+            "output": "initial"
+          },
+          "condition": "详情未改变时"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "interpretation",
+          "schema": "ItemInterpretation"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "INTERPRET_SYSTEM",
+          "text": "你判断一个权威店铺商品行表达的消费者比较对象。\n只使用输入事实。输出 JSON，不补查、不猜证据。\nProduct 是消费者会独立比较的商品身份：明显不同的型号、机身、形态、容量或核心能力应分开；颜色、赠品、存储卡、安装包和纯套餐通常只是购买配置。\n名称直观表明独立商品时直接判断，不要仅因缺少逐项参数对比而标记待证。只有输入同时指向多个身份且确实无法决定时才 needs_evidence。\n非目标品类整机、配件、二手、官翻或服务项为 exclude。\n返回 disposition、product_name、model、consumer_differences、purchase_configuration、reason。",
+          "origin": "代码常量",
+          "source": {
+            "path": "evidence/27-identity.py.md",
+            "line": 9
+          },
+          "additionalSources": []
+        }
+      ],
+      "trigger": "待判断 item 的详情改变时重新调用；未变时复用初判",
+      "note": null
+    },
+    {
+      "id": "store.select",
+      "name": "身份候选收敛",
+      "type": "program",
+      "purpose": "先复用唯一精确身份，再选择有界候选；缺少身份或候选无法收窄时保留待证。",
+      "implementation": "src/goods_kb/store_product_discovery/service.py",
+      "sources": [
+        {
+          "path": "evidence/29-service.py.md",
+          "line": 9
+        },
+        {
+          "path": "evidence/31-service.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "interpretation",
+          "schema": "ItemInterpretation",
+          "required": true,
+          "from": {
+            "node": "store.interpret",
+            "output": "interpretation"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "selection",
+          "schema": "CandidateSelection"
+        }
+      ],
+      "prompts": [],
+      "trigger": "item 解释为 target_product 时",
+      "note": "不能将宽候选强制截成少量结果；无候选且身份充分时可直接新建，不强制调用比较模型。"
+    },
+    {
+      "id": "store.compare",
+      "name": "少量 Product 候选比较",
+      "type": "model",
+      "purpose": "与 1–3 个候选比较，选择 existing / new / exclude / needs_evidence。",
+      "implementation": "src/goods_kb/store_product_discovery/identity.py",
+      "sources": [
+        {
+          "path": "evidence/26-identity.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "selection",
+          "schema": "CandidateSelection",
+          "required": true,
+          "from": {
+            "node": "store.select",
+            "output": "selection"
+          },
+          "condition": "存在可可靠收敛的少量候选"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "decision",
+          "schema": "ComparisonDecision"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "COMPARE_SYSTEM",
+          "text": "你只比较当前店铺 item 与给出的少量 Product 候选。\nProduct 是消费者会独立比较的商品身份。型号、机身、形态、容量或核心能力的明显差异可形成新 Product；颜色、赠品、存储卡、安装包和纯套餐通常仍归入同一 Product，并记录为购买配置。\n名称直观表明新 Product 时可直接选择 new，不要求额外证明。只有当前材料确实无法区分时才 needs_evidence。\nexisting 只能返回输入候选中的 product_id。返回 action、product_id、product_name、model、reason。",
+          "origin": "代码常量",
+          "source": {
+            "path": "evidence/28-identity.py.md",
+            "line": 9
+          },
+          "additionalSources": []
+        }
+      ],
+      "trigger": "程序将候选可靠收敛且仍需比较时",
+      "note": "候选筛选由程序负责；没有候选或已排除等路径由 service 直接处理，不会强制模型比较。"
+    },
+    {
+      "id": "store.apply",
+      "name": "目录变更整理",
+      "type": "program",
+      "purpose": "组织新 Product 与购买链接归属；apply=true 时执行目录写入。",
+      "implementation": "src/goods_kb/store_product_discovery/service.py",
+      "sources": [
+        {
+          "path": "evidence/29-service.py.md",
+          "line": 9
+        },
+        {
+          "path": "evidence/30-service.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "known",
+          "schema": "KnownItem[]",
+          "required": true,
+          "from": {
+            "node": "store.known",
+            "output": "known"
+          },
+          "condition": "复用稳定归属"
+        },
+        {
+          "name": "details",
+          "schema": "EnrichedItem[]",
+          "required": true,
+          "from": {
+            "node": "store.enrich",
+            "output": "details"
+          },
+          "condition": "已知归属的详情增量"
+        },
+        {
+          "name": "initial",
+          "schema": "ItemInterpretation[]",
+          "required": true,
+          "from": {
+            "node": "store.triage",
+            "output": "initial"
+          },
+          "condition": "直接 exclude"
+        },
+        {
+          "name": "interpretation",
+          "schema": "ItemInterpretation",
+          "required": true,
+          "from": {
+            "node": "store.interpret",
+            "output": "interpretation"
+          },
+          "condition": "无需比较的路径"
+        },
+        {
+          "name": "selection",
+          "schema": "CandidateSelection",
+          "required": true,
+          "from": {
+            "node": "store.select",
+            "output": "selection"
+          },
+          "condition": "精确复用、直接新建或待证"
+        },
+        {
+          "name": "decision",
+          "schema": "ComparisonDecision",
+          "required": true,
+          "from": {
+            "node": "store.compare",
+            "output": "decision"
+          },
+          "condition": "需要比较的路径"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "schema": "StoreProductDiscoveryResult"
+        }
+      ],
+      "prompts": [],
+      "trigger": "本轮已知项补证及待判断项的处理全部返回后汇总；仅 apply=true 且有变更时写入",
+      "note": "先汇总 existing/new/exclude/needs_evidence；apply=true 且有变更时按 expected_scope_version 写入。存在待证项时仍可能已发布确定项，run 失败不能解释为没有副作用。"
+    },
+    {
+      "id": "store.finish",
+      "name": "保存结果与任务收尾",
+      "type": "program",
+      "purpose": "记录本轮结果；有待证项时任务 dead、run failed，否则成功。",
+      "implementation": "src/goods_kb/store_product_discovery/controller.py",
+      "sources": [
+        {
+          "path": "evidence/23-controller.py.md",
+          "line": 9
+        },
+        {
+          "path": "evidence/35-state_repo.py.md",
+          "line": 9
+        },
+        {
+          "path": "evidence/34-controller.py.md",
+          "line": 9
+        }
+      ],
+      "inputs": [
+        {
+          "name": "result",
+          "schema": "StoreProductDiscoveryResult",
+          "required": true,
+          "from": {
+            "node": "store.apply",
+            "output": "result"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "receipt",
+          "schema": "TaskRunReceipt"
+        }
+      ],
+      "prompts": [],
+      "trigger": "取得本轮结果后记录事件并按 complete 收尾；异常另走宿主重试策略",
+      "note": "completed 事件表示结果被记录，不能仅凭事件名判断业务 complete。临时异常走 retry，旧 attempt 不可覆盖新 attempt。"
+    }
+  ],
+  "flows": [
+    {
+      "id": "content-knowledge",
+      "name": "内容发现与知识构建",
+      "purpose": "把候选内容转为可溯源的 Claim 与决策 Insight，保留两条独立消费路径。",
+      "nodes": [
+        "search.sweep",
+        "search.fire",
+        "admission.semantic",
+        "cacp.dispatch",
+        "content.fetch",
+        "content.asr",
+        "content.resolve",
+        "content.quality",
+        "claim.qualify",
+        "claim.extract",
+        "claim.route",
+        "insight.qualify",
+        "insight.extract",
+        "insight.route"
+      ],
+      "results": [
+        "claim.route.routes",
+        "insight.route.route"
+      ],
+      "source": {
+        "path": "evidence/08-text_resolution.py.md",
+        "line": 9
+      },
+      "note": "这是跨 operation/job/worker 的职责组合，不对应一个全局事务或现有端到端 run。质量就绪后 Claim 与 Insight 按各自策略独立选取；清洗不作为通用前置。"
+    },
+    {
+      "id": "store-discovery",
+      "name": "权威店铺商品发现",
+      "purpose": "完整读取店铺商品，判断消费者比较身份，保存确定项并显式保留待证项。",
+      "nodes": [
+        "store.scope",
+        "store.read",
+        "store.known",
+        "store.triage",
+        "store.enrich",
+        "store.interpret",
+        "store.select",
+        "store.compare",
+        "store.apply",
+        "store.finish"
+      ],
+      "results": [
+        "store.finish.receipt"
+      ],
+      "source": {
+        "path": "evidence/23-controller.py.md",
+        "line": 9
+      },
+      "note": "一个控制器任务处理店铺×品类；Catalog 写入在品牌×品类范围检查版本。展示分支可在不同 item 上同时发生。"
+    }
+  ],
+  "instances": [
+    "instances/content-knowledge.json",
+    "instances/store-discovery.json"
+  ]
+}

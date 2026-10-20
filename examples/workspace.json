@@ -1,0 +1,386 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "title": "文档工作区",
+    "date": "2026-10-20",
+    "baseCommit": "example",
+    "scope": "通用示例定义，展示条件路径、共享节点与跨流关系。示例函数仅说明边界，未连接实际执行服务。",
+    "promptScope": "示例 Prompt 全文；运行输入、工具结果和模型响应由接入方提供。"
+  },
+  "nodes": [
+    {
+      "id": "document.ingest",
+      "name": "文档接收",
+      "type": "program",
+      "purpose": "保留原文与稳定来源 ID。",
+      "implementation": "pipeline.py",
+      "sources": [
+        {
+          "path": "pipeline.py",
+          "line": 7
+        }
+      ],
+      "inputs": [
+        {
+          "name": "document",
+          "schema": "Document",
+          "required": true,
+          "source": "external"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "document",
+          "schema": "Document"
+        }
+      ],
+      "prompts": [],
+      "trigger": "上游输入就绪或宿主显式调用",
+      "note": null
+    },
+    {
+      "id": "document.route",
+      "name": "文本路径选择",
+      "type": "program",
+      "purpose": "由媒体元数据选择正文或转写路径。",
+      "implementation": "pipeline.py",
+      "sources": [
+        {
+          "path": "pipeline.py",
+          "line": 12
+        }
+      ],
+      "inputs": [
+        {
+          "name": "document",
+          "schema": "Document",
+          "required": true,
+          "from": {
+            "node": "document.ingest",
+            "output": "document"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "route",
+          "schema": "DocumentRoute"
+        }
+      ],
+      "prompts": [],
+      "trigger": "上游输入就绪或宿主显式调用",
+      "note": null
+    },
+    {
+      "id": "document.transcribe",
+      "name": "音频转写",
+      "type": "program",
+      "purpose": "从外部服务获取音频全文。",
+      "implementation": "pipeline.py",
+      "sources": [
+        {
+          "path": "pipeline.py",
+          "line": 17
+        }
+      ],
+      "inputs": [
+        {
+          "name": "route",
+          "schema": "DocumentRoute",
+          "required": true,
+          "from": {
+            "node": "document.route",
+            "output": "route"
+          },
+          "condition": "仅音频路径"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "transcript",
+          "schema": "Text"
+        }
+      ],
+      "prompts": [],
+      "trigger": "上游输入就绪或宿主显式调用",
+      "note": null
+    },
+    {
+      "id": "document.resolve",
+      "name": "文档全文就绪",
+      "type": "program",
+      "purpose": "接收已选择路径的文本。",
+      "implementation": "pipeline.py",
+      "sources": [
+        {
+          "path": "pipeline.py",
+          "line": 22
+        }
+      ],
+      "inputs": [
+        {
+          "name": "text",
+          "schema": "DocumentRoute",
+          "required": true,
+          "from": {
+            "node": "document.route",
+            "output": "route"
+          },
+          "condition": "纯文本路径"
+        },
+        {
+          "name": "transcript",
+          "schema": "Text",
+          "required": true,
+          "from": {
+            "node": "document.transcribe",
+            "output": "transcript"
+          },
+          "condition": "音频路径"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "schema": "ResolvedText"
+        }
+      ],
+      "prompts": [],
+      "trigger": "上游输入就绪或宿主显式调用",
+      "note": "正文和转写是互斥输入，不需要等待两条路径都完成。"
+    },
+    {
+      "id": "summary.generate",
+      "name": "带引用的摘要",
+      "type": "model",
+      "purpose": "从原文提取关键结论并保留引用。",
+      "implementation": "pipeline.py",
+      "sources": [
+        {
+          "path": "pipeline.py",
+          "line": 27
+        }
+      ],
+      "inputs": [
+        {
+          "name": "text",
+          "schema": "ResolvedText",
+          "required": true,
+          "from": {
+            "node": "document.resolve",
+            "output": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "summary",
+          "schema": "CitedSummary"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "System prompt",
+          "textFile": "prompts/summarize.md",
+          "origin": "示例 Prompt 文件",
+          "source": {
+            "path": "prompts/summarize.md",
+            "line": 1
+          }
+        }
+      ],
+      "trigger": "上游输入就绪或宿主显式调用",
+      "note": null
+    },
+    {
+      "id": "summary.review",
+      "name": "摘要证据核查",
+      "type": "model",
+      "purpose": "检查每条摘要陈述是否获得原文支持。",
+      "implementation": "pipeline.py",
+      "sources": [
+        {
+          "path": "pipeline.py",
+          "line": 32
+        }
+      ],
+      "inputs": [
+        {
+          "name": "summary",
+          "schema": "CitedSummary",
+          "required": true,
+          "from": {
+            "node": "summary.generate",
+            "output": "summary"
+          }
+        },
+        {
+          "name": "text",
+          "schema": "ResolvedText",
+          "required": true,
+          "from": {
+            "node": "document.resolve",
+            "output": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "review",
+          "schema": "ReviewVerdict"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "System prompt",
+          "textFile": "prompts/review.md",
+          "origin": "示例 Prompt 文件",
+          "source": {
+            "path": "prompts/review.md",
+            "line": 1
+          }
+        }
+      ],
+      "trigger": "上游输入就绪或宿主显式调用",
+      "note": null
+    },
+    {
+      "id": "summary.publish",
+      "name": "摘要发布",
+      "type": "program",
+      "purpose": "仅在证据核查通过时接受发布。",
+      "implementation": "pipeline.py",
+      "sources": [
+        {
+          "path": "pipeline.py",
+          "line": 37
+        }
+      ],
+      "inputs": [
+        {
+          "name": "review",
+          "schema": "ReviewVerdict",
+          "required": true,
+          "from": {
+            "node": "summary.review",
+            "output": "review"
+          },
+          "condition": "accepted = true"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "schema": "Publication"
+        }
+      ],
+      "prompts": [],
+      "trigger": "上游输入就绪或宿主显式调用",
+      "note": null
+    },
+    {
+      "id": "research.agent",
+      "name": "文档调查 Agent",
+      "type": "harness",
+      "purpose": "按目标选择工具调查，保留未知与引用。",
+      "implementation": "pipeline.py",
+      "sources": [
+        {
+          "path": "pipeline.py",
+          "line": 42
+        }
+      ],
+      "inputs": [
+        {
+          "name": "goal",
+          "schema": "ResearchGoal",
+          "required": true,
+          "source": "external"
+        },
+        {
+          "name": "text",
+          "schema": "ResolvedText",
+          "required": true,
+          "from": {
+            "node": "document.resolve",
+            "output": "text"
+          },
+          "condition": "调查需要该文档时"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "answer",
+          "schema": "CitedAnswer"
+        }
+      ],
+      "prompts": [
+        {
+          "title": "System prompt",
+          "textFile": "prompts/investigate.md",
+          "origin": "示例 Prompt 文件",
+          "source": {
+            "path": "prompts/investigate.md",
+            "line": 1
+          }
+        }
+      ],
+      "trigger": "上游输入就绪或宿主显式调用",
+      "note": "可用工具：search、read；预算：5 次调用；权限：只读。工具调用顺序由 Harness 决定，图中不固定展开。"
+    }
+  ],
+  "flows": [
+    {
+      "id": "documents",
+      "name": "文档准备",
+      "purpose": "按文档类型取得可引用的完整文本。",
+      "nodes": [
+        "document.ingest",
+        "document.route",
+        "document.transcribe",
+        "document.resolve"
+      ],
+      "results": [
+        "document.resolve.text"
+      ],
+      "source": {
+        "path": "pipeline.py",
+        "line": 1
+      }
+    },
+    {
+      "id": "summaries",
+      "name": "摘要与证据核查",
+      "purpose": "把原文变成有引用、经核查的摘要。",
+      "nodes": [
+        "document.resolve",
+        "summary.generate",
+        "summary.review",
+        "summary.publish"
+      ],
+      "results": [
+        "summary.publish.result"
+      ],
+      "source": {
+        "path": "pipeline.py",
+        "line": 27
+      }
+    },
+    {
+      "id": "research",
+      "name": "目标驱动调查",
+      "purpose": "由 Harness 决定调查路径。",
+      "nodes": [
+        "document.resolve",
+        "research.agent"
+      ],
+      "results": [
+        "research.agent.answer"
+      ],
+      "source": {
+        "path": "pipeline.py",
+        "line": 42
+      }
+    }
+  ]
+}

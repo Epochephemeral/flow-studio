@@ -1,0 +1,340 @@
+{
+  "capturedAt": "2026-10-20",
+  "source": "goods-kb local working tree",
+  "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+  "files": [
+    {
+      "path": "src/goods_kb/discovery/automatic_search_service.py",
+      "startLine": 664,
+      "endLine": 723,
+      "sha256": "7d4a98310964254a25914aafa3544ea6a263281e3e41587e7f821a32abf02800",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/01-automatic_search_service.py.md"
+    },
+    {
+      "path": "src/goods_kb/search/fire.py",
+      "startLine": 1,
+      "endLine": 60,
+      "sha256": "a085d80e3f0764b1062e2b98a639fa33900b1d4a1142c3349ef4ce13213c675c",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/02-fire.py.md"
+    },
+    {
+      "path": "src/goods_kb/l2_selection/admission_service.py",
+      "startLine": 1,
+      "endLine": 60,
+      "sha256": "e02591d3d3c419db8542153327d9b0e1a62848feaaf123b6bf71a9801a442b28",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/03-admission_service.py.md"
+    },
+    {
+      "path": "migrations/0083_automatic_author_discovery_recovery.sql",
+      "startLine": 69,
+      "endLine": 128,
+      "sha256": "9a1b562ce837fdc3ad412b9eb41f07e5076733253cc81c4e348a573e7be31165",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/04-0083_automatic_author_discovery_recovery.sql.md"
+    },
+    {
+      "path": "src/goods_kb/ops/reconciler.py",
+      "startLine": 123,
+      "endLine": 182,
+      "sha256": "353be2c8cbbf949803164b042e0d53f9754b170fc7b5df2a1b163c1a08614624",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/05-reconciler.py.md"
+    },
+    {
+      "path": "src/goods_kb/l2_selection/fetch_service.py",
+      "startLine": 1,
+      "endLine": 60,
+      "sha256": "0e001dabcf9f0306c37a9c2d26ca80e8389d37da9e6d46db3f190bb62000bfa7",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/06-fetch_service.py.md"
+    },
+    {
+      "path": "src/goods_kb/media/video_asr.py",
+      "startLine": 1,
+      "endLine": 60,
+      "sha256": "4da3453add1b1cfae98c1793cc839a8816edddff3e9014ddc6849102b6e67b95",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/07-video_asr.py.md"
+    },
+    {
+      "path": "src/goods_kb/content/text_resolution.py",
+      "startLine": 12,
+      "endLine": 71,
+      "sha256": "12c652ffdb04dde1cb7084094b32f01c62273bd5af011359e10f56812b346fa2",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/08-text_resolution.py.md"
+    },
+    {
+      "path": "src/goods_kb/content/quality_client.py",
+      "startLine": 1,
+      "endLine": 60,
+      "sha256": "cf4c64a64714358444ea327772633aac1db224f1a982015d2b961be7378fbcdc",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/09-quality_client.py.md"
+    },
+    {
+      "path": "migrations/0042_content_quality_dimension_v3_registry.sql",
+      "startLine": 8,
+      "endLine": 67,
+      "sha256": "d863162ec19c7926c7e6dbf877845933b0ee3c98c3123cf229dcba5ad5388f64",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/10-0042_content_quality_dimension_v3_registry.sql.md"
+    },
+    {
+      "path": "src/goods_kb/dimension/automatic_claim_service.py",
+      "startLine": 82,
+      "endLine": 141,
+      "sha256": "057c58c5b56fa694379bc327058861ca7652a991f74e6add643f5fc125951e98",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/11-automatic_claim_service.py.md"
+    },
+    {
+      "path": "src/goods_kb/dimension/claim_client.py",
+      "startLine": 1,
+      "endLine": 60,
+      "sha256": "9bb45db94b1c3436a392ddbb532cebed4bc166dfb89f87cbb14961f94f75ecc7",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/12-claim_client.py.md"
+    },
+    {
+      "path": "migrations/0084_claim_extraction_alias_span_contract.sql",
+      "startLine": 114,
+      "endLine": 173,
+      "sha256": "d70f4c0f928028703f152e0bc9ce14be108a38b5991c8c7571d7c9083e735a6c",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/13-0084_claim_extraction_alias_span_contract.sql.md"
+    },
+    {
+      "path": "migrations/0161_dimension_claim_semantic_field_separation.sql",
+      "startLine": 174,
+      "endLine": 233,
+      "sha256": "f823c031d534a1d59d6d9a070e378c61a2795fc7011e9b927f2ecbca47ce40a9",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/14-0161_dimension_claim_semantic_field_separation.sql.md"
+    },
+    {
+      "path": "migrations/0161_dimension_claim_semantic_field_separation.sql",
+      "startLine": 123,
+      "endLine": 182,
+      "sha256": "f823c031d534a1d59d6d9a070e378c61a2795fc7011e9b927f2ecbca47ce40a9",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/15-0161_dimension_claim_semantic_field_separation.sql.md"
+    },
+    {
+      "path": "src/goods_kb/dimension/claim_metadata_service.py",
+      "startLine": 68,
+      "endLine": 127,
+      "sha256": "957a1d289613638edfb0ff7edd32ca5a88aec62e32996073112bd7c7a55f9a6e",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/16-claim_metadata_service.py.md"
+    },
+    {
+      "path": "migrations/0223_claim_category_candidate_choice_v3.sql",
+      "startLine": 27,
+      "endLine": 86,
+      "sha256": "bb3ca9b20accd41ac3722be4bb139fd8eaa3cc0f8430660ffabcd1ce1adf6c3f",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/17-0223_claim_category_candidate_choice_v3.sql.md"
+    },
+    {
+      "path": "src/goods_kb/catalog/dimension_service.py",
+      "startLine": 25,
+      "endLine": 84,
+      "sha256": "e5442364c1be27db78891ded56ba1b9cec6b8075eecb6b00b7d2b981cca3e2d6",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/18-dimension_service.py.md"
+    },
+    {
+      "path": "src/goods_kb/insight/automatic_service.py",
+      "startLine": 167,
+      "endLine": 226,
+      "sha256": "db5b82e46fe8d187f891665c76f8f77b2086e31f6a8ccefe30b974882fc724bd",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/19-automatic_service.py.md"
+    },
+    {
+      "path": "src/goods_kb/insight/client.py",
+      "startLine": 1,
+      "endLine": 60,
+      "sha256": "962b133e9777deb3b09c698cb31835986dd83d1d5445498117b6d36c0211c079",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/20-client.py.md"
+    },
+    {
+      "path": "migrations/0110_content_insight_extraction.sql",
+      "startLine": 57,
+      "endLine": 116,
+      "sha256": "d95052b9713834fc14e57c635bee3ba3b28fb0e8745ad75b0b58e06f5d050c3d",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/21-0110_content_insight_extraction.sql.md"
+    },
+    {
+      "path": "src/goods_kb/insight/category_route_service.py",
+      "startLine": 1,
+      "endLine": 60,
+      "sha256": "ab18f428e756501894a7db6868dfdaca021c39a52470726fc2991e39721e325a",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/22-category_route_service.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/controller.py",
+      "startLine": 178,
+      "endLine": 237,
+      "sha256": "88a65d203207fd9adae0bd6d472fcc60eb488e79b8d77678aa6306dc5dddf2ae",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/23-controller.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/store_reader.py",
+      "startLine": 36,
+      "endLine": 95,
+      "sha256": "a5492367d8f907641e6d005b273e939fc1346402536c7f1bd1947db502d4f22f",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/24-store_reader.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/classification.py",
+      "startLine": 1,
+      "endLine": 51,
+      "sha256": "f4bad50a4f09b34367adc2257e5b2a84637475b2a6295c1e60030d3b162bb524",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/25-classification.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/identity.py",
+      "startLine": 78,
+      "endLine": 137,
+      "sha256": "4160396a20dd05bc88e484a18d1d8ed67e8b019a717c682755883f40ddca8725",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/26-identity.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/identity.py",
+      "startLine": 59,
+      "endLine": 118,
+      "sha256": "4160396a20dd05bc88e484a18d1d8ed67e8b019a717c682755883f40ddca8725",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/27-identity.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/identity.py",
+      "startLine": 67,
+      "endLine": 126,
+      "sha256": "4160396a20dd05bc88e484a18d1d8ed67e8b019a717c682755883f40ddca8725",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/28-identity.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/service.py",
+      "startLine": 24,
+      "endLine": 83,
+      "sha256": "f7255e7478a47be717ec8e57abfe16cc2bc16885823614441c2d8cf830a405d5",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/29-service.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/service.py",
+      "startLine": 180,
+      "endLine": 239,
+      "sha256": "f7255e7478a47be717ec8e57abfe16cc2bc16885823614441c2d8cf830a405d5",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/30-service.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/service.py",
+      "startLine": 204,
+      "endLine": 263,
+      "sha256": "f7255e7478a47be717ec8e57abfe16cc2bc16885823614441c2d8cf830a405d5",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/31-service.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/store_reader.py",
+      "startLine": 88,
+      "endLine": 147,
+      "sha256": "a5492367d8f907641e6d005b273e939fc1346402536c7f1bd1947db502d4f22f",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/32-store_reader.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/store_reader.py",
+      "startLine": 155,
+      "endLine": 214,
+      "sha256": "a5492367d8f907641e6d005b273e939fc1346402536c7f1bd1947db502d4f22f",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/33-store_reader.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/controller.py",
+      "startLine": 144,
+      "endLine": 203,
+      "sha256": "88a65d203207fd9adae0bd6d472fcc60eb488e79b8d77678aa6306dc5dddf2ae",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/34-controller.py.md"
+    },
+    {
+      "path": "src/goods_kb/store_product_discovery/state_repo.py",
+      "startLine": 23,
+      "endLine": 79,
+      "sha256": "dc960acc6d5efafaf2f086336a71f462d45736268ef0cc5ea5fb63bd111a9763",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": false,
+      "export": "evidence/35-state_repo.py.md"
+    },
+    {
+      "path": "src/goods_kb/cli_runtime.py",
+      "startLine": 5041,
+      "endLine": 5100,
+      "sha256": "4a4df9e781314f22eca4fe4e6c12f4ece2b268416a8367cef19e906ae652ccf1",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/36-cli_runtime.py.md"
+    },
+    {
+      "path": "src/goods_kb/cli.py",
+      "startLine": 270,
+      "endLine": 329,
+      "sha256": "9749b2f95b28481e016386e449885f1a1c431afd43039da0ec6be509b5f76531",
+      "baselineCommit": "5ee2972165b156749ef7cc777420e97929094be5",
+      "worktreeFileTracked": true,
+      "export": "evidence/37-cli.py.md"
+    }
+  ]
+}

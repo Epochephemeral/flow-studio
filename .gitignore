@@ -1,0 +1,8 @@
+node_modules/
+dist/
+public/sources/
+src/snapshot.json
+.env
+.env.*
+!.env.example
+.DS_Store

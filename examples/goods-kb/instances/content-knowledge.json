@@ -1,0 +1,361 @@
+{
+  "schemaVersion": 1,
+  "instanceId": "example:instance:content-knowledge",
+  "flowId": "content-knowledge",
+  "evidenceKind": "synthetic",
+  "definitionSha256": "1800cc31956a4976d667dbfddf24ad2190b86bb6558f23c4976925434fb54e65",
+  "state": "partial",
+  "sourceRunIds": [
+    "example:run:discovery",
+    "example:run:fetch",
+    "example:run:asr",
+    "example:run:quality",
+    "example:run:claim",
+    "example:run:insight"
+  ],
+  "completionEvidenceRef": null,
+  "executions": [
+    {
+      "executionId": "example:execution:search.sweep",
+      "nodeId": "search.sweep",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:discovery",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [],
+      "outputRefs": [
+        "example:artifact:search.sweep"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:search.sweep"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:search.fire",
+      "nodeId": "search.fire",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:discovery",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:search.sweep"
+      ],
+      "outputRefs": [
+        "example:artifact:search.fire"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:search.fire"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:admission.semantic",
+      "nodeId": "admission.semantic",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:discovery",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:search.fire"
+      ],
+      "outputRefs": [
+        "example:artifact:admission.semantic"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:admission.semantic"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:cacp.dispatch",
+      "nodeId": "cacp.dispatch",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:fetch",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:admission.semantic"
+      ],
+      "outputRefs": [
+        "example:artifact:cacp.dispatch"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:cacp.dispatch"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:content.fetch",
+      "nodeId": "content.fetch",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:fetch",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:cacp.dispatch"
+      ],
+      "outputRefs": [
+        "example:artifact:content.fetch"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:content.fetch"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:content.asr-attempt-1",
+      "nodeId": "content.asr",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:asr",
+      "taskId": "example:task:asr-1",
+      "attempt": 1,
+      "state": "failed",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:content.fetch"
+      ],
+      "outputRefs": [],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:content.asr-attempt-1"
+      ],
+      "reason": "演示外部服务暂时失败；后续重试不覆盖本次证据",
+      "inputValue": {
+        "mediaRef": "example:media:video-1",
+        "textRequirement": "transcript"
+      }
+    },
+    {
+      "executionId": "example:execution:content.asr-attempt-2",
+      "nodeId": "content.asr",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:asr",
+      "taskId": "example:task:asr-1",
+      "attempt": 2,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:content.fetch"
+      ],
+      "outputRefs": [
+        "example:artifact:content.asr-attempt-2"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:content.asr-attempt-2"
+      ],
+      "reason": "演示重试成功并保存 transcript",
+      "inputValue": {
+        "mediaRef": "example:media:video-1",
+        "textRequirement": "transcript"
+      },
+      "outputValue": {
+        "transcript": "演示转写：该产品适合长时间使用，但便携性有限。",
+        "mcp_duration_ms": null
+      }
+    },
+    {
+      "executionId": "example:execution:content.resolve",
+      "nodeId": "content.resolve",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:quality",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:content.fetch",
+        "example:artifact:content.asr-attempt-2"
+      ],
+      "outputRefs": [
+        "example:artifact:content.resolve"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:content.resolve"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:content.quality",
+      "nodeId": "content.quality",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:quality",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:content.resolve"
+      ],
+      "outputRefs": [
+        "example:artifact:content.quality"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:content.quality"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:claim.qualify",
+      "nodeId": "claim.qualify",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:claim",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:content.quality",
+        "example:artifact:content.resolve"
+      ],
+      "outputRefs": [
+        "example:artifact:claim.qualify"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:claim.qualify"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:claim.extract",
+      "nodeId": "claim.extract",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:claim",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:claim.qualify"
+      ],
+      "outputRefs": [
+        "example:artifact:claim.extract"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:claim.extract"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:claim.route",
+      "nodeId": "claim.route",
+      "itemKey": "example:content:video-1",
+      "runId": null,
+      "taskId": null,
+      "attempt": null,
+      "state": "unknown",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:claim.extract"
+      ],
+      "outputRefs": [],
+      "policyRefs": [],
+      "evidenceRefs": [],
+      "reason": "未采集到此职责的结果，不能由抽取成功推断路由成功"
+    },
+    {
+      "executionId": "example:execution:insight.qualify",
+      "nodeId": "insight.qualify",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:insight",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:content.quality",
+        "example:artifact:content.resolve"
+      ],
+      "outputRefs": [
+        "example:artifact:insight.qualify"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:insight.qualify"
+      ],
+      "reason": "演示收据：本职责产物已保存"
+    },
+    {
+      "executionId": "example:execution:insight.extract",
+      "nodeId": "insight.extract",
+      "itemKey": "example:content:video-1",
+      "runId": "example:run:insight",
+      "taskId": null,
+      "attempt": null,
+      "state": "succeeded",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:insight.qualify"
+      ],
+      "outputRefs": [
+        "example:artifact:insight.extract"
+      ],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:insight.extract"
+      ],
+      "reason": "演示成功返回空 insights；不是失败，也不触发重试",
+      "outputValue": {
+        "insights": []
+      }
+    },
+    {
+      "executionId": "example:execution:insight.route",
+      "nodeId": "insight.route",
+      "itemKey": "example:content:video-1",
+      "runId": null,
+      "taskId": null,
+      "attempt": null,
+      "state": "skipped",
+      "startedAt": null,
+      "endedAt": null,
+      "inputRefs": [
+        "example:artifact:insight.extract"
+      ],
+      "outputRefs": [],
+      "policyRefs": [],
+      "evidenceRefs": [
+        "example:event:insight.route"
+      ],
+      "reason": "演示上游 insights=[]，按条件不进入品类路由"
+    }
+  ],
+  "correlation": {
+    "subjectKey": "example:content:video-1",
+    "method": "演示按稳定 content key、observation/receipt refs 关联，不以时间接近作为因果证据"
+  }
+}
